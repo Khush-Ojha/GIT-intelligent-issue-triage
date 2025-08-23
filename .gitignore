@@ -1,0 +1,22 @@
+# Python virtual environment
+venv/
+
+# Environment variables - NEVER commit secrets
+.env
+
+# Data files - Should not be tracked in Git
+data/
+
+# Large Model files - Should not be tracked in Git
+
+results/
+logs/
+
+# IDE / Editor specific
+.vscode/
+.idea/
+
+# Python caches
+__pycache__/
+*.pyc
+.ipynb_checkpoints
