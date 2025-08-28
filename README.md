@@ -3,7 +3,7 @@ title: Intelligent Issue Triage
 emoji: 🤖
 colorFrom: green
 colorTo: blue
-sdk: python
+sdk: docker
 ---
 
 # Intelligent GitHub Issue Triage System
