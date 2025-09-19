@@ -2,12 +2,10 @@
 
 name: 'AI Issue Triage'
 
-# This action triggers whenever a new issue is opened
 on:
   issues:
     types: [opened]
 
-# This allows the action to write back to your repository (to add a label)
 permissions:
   issues: write
 
@@ -15,29 +13,27 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
+      # THE FIX IS HERE: This step gives the Action context of your repository
+      - uses: actions/checkout@v4
+
       - name: Triage Issue
         env:
-          # IMPORTANT: Replace this with YOUR live Hugging Face Space URL
           TRIAGE_API_URL: "https://khush25-triage.hf.space/triage"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 1. Prepare the JSON payload from the issue data
           JSON_PAYLOAD=$(jq -n --arg title "${{ github.event.issue.title }}" --arg body "${{ github.event.issue.body }}" \
           '{title: $title, body: $body}')
 
-          # 2. Call our live FastAPI endpoint on Hugging Face
           echo "Sending data to the live API..."
           API_RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" $TRIAGE_API_URL)
           echo "API Response: $API_RESPONSE"
 
-          # 3. Extract the predicted label from the JSON response
           PREDICTED_LABEL=$(echo $API_RESPONSE | jq -r .predicted_label)
           echo "Predicted Label: $PREDICTED_LABEL"
 
-          # 4. Use the GitHub CLI (pre-installed on the runner) to add the label to the issue
           if [ -n "$PREDICTED_LABEL" ] && [ "$PREDICTED_LABEL" != "null" ]; then
             echo "Applying label '${PREDICTED_LABEL}' to issue #${{ github.event.issue.number }}..."
             gh issue edit ${{ github.event.issue.number }} --add-label "$PREDICTED_LABEL"
           else
-            echo "No valid label was predicted by the API."
+            echo "No valid label predicted by the API."
           fi
