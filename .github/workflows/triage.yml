@@ -18,7 +18,7 @@ jobs:
       - name: Triage Issue
         env:
           # IMPORTANT: Replace this with YOUR live Hugging Face Space URL
-          TRIAGE_API_URL: "https://huggingface.co/spaces/Khush25/triage/triage"
+          TRIAGE_API_URL: "https://khush25-triage.hf.space/triage"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # 1. Prepare the JSON payload from the issue data
