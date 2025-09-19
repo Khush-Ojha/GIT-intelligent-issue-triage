@@ -1,0 +1,49 @@
+# .github/workflows/triage.yml
+
+name: 'AI Issue Triage'
+
+# This action triggers whenever a new issue is opened
+on:
+  issues:
+    types: [opened]
+
+# This allows the action to write back to your repository (to add a label)
+permissions:
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Triage Issue
+        env:
+          # IMPORTANT: Replace this with your actual Hugging Face Space URL
+          TRIAGE_API_URL: "https://YourUsername-YourSpaceName.hf.space"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. Combine title and body into a single JSON payload
+          JSON_PAYLOAD=$(jq -n --arg title "${{ github.event.issue.title }}" --arg body "${{ github.event.issue.body }}" \
+          '{title: $title, body: $body}')
+
+          # 2. Call our live API's prediction endpoint
+          # Note: Since it's a Streamlit app, the real API is at a hidden /-/api/predict/ route
+          # We'll use a simple approach here that should work for most basic apps.
+          # For a more robust solution, a dedicated FastAPI endpoint is better.
+          API_RESPONSE=$(curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d "$JSON_PAYLOAD" \
+            "${TRIAGE_API_URL}/triage") # Assuming our FastAPI is still accessible
+
+          echo "API Response: $API_RESPONSE"
+
+          # 3. Extract the predicted label from the JSON response
+          PREDICTED_LABEL=$(echo $API_RESPONSE | jq -r .predicted_label)
+          echo "Predicted Label: $PREDICTED_LABEL"
+
+          # 4. Use the GitHub CLI to add the label to the issue
+          if [ -n "$PREDICTED_LABEL" ] && [ "$PREDICTED_LABEL" != "null" ]; then
+            echo "Applying label '${PREDICTED_LABEL}' to issue #${{ github.event.issue.number }}..."
+            gh issue edit ${{ github.event.issue.number }} --add-label "$PREDICTED_LABEL"
+          else
+            echo "No valid label predicted by the API."
+          fi

@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+torch
+transformers
+sentencepiece
+protobuf
+tiktoken
+scikit-learn
+pandas
+python-dotenv
+streamlit
