@@ -1,39 +1,23 @@
 # .github/workflows/triage.yml
-
 name: 'AI Issue Triage'
-
 on:
   issues:
     types: [opened]
-
 permissions:
   issues: write
-
 jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-      # THE FIX IS HERE: This step gives the Action context of your repository
-      - uses: actions/checkout@v4
-
-      - name: Triage Issue
+      - name: Run Triage Script
         env:
-          TRIAGE_API_URL: "https://khush25-triage.hf.space/triage"
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TRIAGE_API_URL: "https://khush25-issue-triage-api.hf.space/triage" # Make sure this URL is correct
+
         run: |
-          JSON_PAYLOAD=$(jq -n --arg title "${{ github.event.issue.title }}" --arg body "${{ github.event.issue.body }}" \
-          '{title: $title, body: $body}')
-
-          echo "Sending data to the live API..."
-          API_RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" $TRIAGE_API_URL)
-          echo "API Response: $API_RESPONSE"
-
-          PREDICTED_LABEL=$(echo $API_RESPONSE | jq -r .predicted_label)
-          echo "Predicted Label: $PREDICTED_LABEL"
-
-          if [ -n "$PREDICTED_LABEL" ] && [ "$PREDICTED_LABEL" != "null" ]; then
-            echo "Applying label '${PREDICTED_LABEL}' to issue #${{ github.event.issue.number }}..."
-            gh issue edit ${{ github.event.issue.number }} --add-label "$PREDICTED_LABEL"
-          else
-            echo "No valid label predicted by the API."
-          fi
+          pip install requests
+          python .github/workflows/triage.py
