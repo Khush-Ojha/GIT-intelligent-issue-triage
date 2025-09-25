@@ -1,9 +1,12 @@
 name: 'AI Issue Triage'
+
 on:
   issues:
     types: [opened]
+
 permissions:
   issues: write
+
 jobs:
   triage:
     runs-on: ubuntu-latest
@@ -11,15 +14,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Triage Script
+      - name: Triage Issue with Live API
         env:
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_BODY: ${{ github.event.issue.body }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # This is your live API on Hugging Face
           TRIAGE_API_URL: "https://khush25-issue-triage-api.hf.space/triage"
-        
+          # This is the GitHub token provided by the Action itself
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pip install requests
-          python triage_script.py
+          # 1. Prepare the JSON data from the issue
+          JSON_PAYLOAD=$(jq -n \
+                          --arg title "${{ github.event.issue.title }}" \
+                          --arg body "${{ github.event.issue.body }}" \
+                          '{title: $title, body: $body}')
+
+          # 2. Call our live API using the 'curl' command
+          echo "INFO: Calling the prediction API..."
+          API_RESPONSE=$(curl -s -X POST \
+                               -H "Content-Type: application/json" \
+                               -d "$JSON_PAYLOAD" \
+                               "$TRIAGE_API_URL")
+          echo "INFO: API responded with: $API_RESPONSE"
+
+          # 3. Extract the predicted label from the JSON response
+          PREDICTED_LABEL=$(echo $API_RESPONSE | jq -r .predicted_label)
+          echo "INFO: Extracted label: $PREDICTED_LABEL"
+
+          # 4. Use the official GitHub CLI ('gh') to apply the label
+          if [[ -n "$PREDICTED_LABEL" && "$PREDICTED_LABEL" != "null" ]]; then
+            echo "INFO: Applying label '${PREDICTED_LABEL}' to issue #${{ github.event.issue.number }}..."
+            gh issue edit ${{ github.event.issue.number }} --add-label "$PREDICTED_LABEL"
+            echo "INFO: Label applied successfully."
+          else
+            echo "WARNING: No valid label was predicted by the API. Skipping."
+          fi
