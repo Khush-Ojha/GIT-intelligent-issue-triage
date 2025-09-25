@@ -19,7 +19,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TRIAGE_API_URL: "https://khush25-issue-triage-api.hf.space/triage"
-
+        
         run: |
           pip install requests
           python triage_script.py
