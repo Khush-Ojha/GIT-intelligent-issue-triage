@@ -1,23 +1,16 @@
-# .github/workflows/triage.yml
-
 name: 'AI Issue Triage'
-
 on:
   issues:
     types: [opened]
-
 permissions:
   issues: write
-
 jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-      # This step is essential to check out your code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # This step now runs BOTH commands
       - name: Run Triage Script
         env:
           ISSUE_TITLE: ${{ github.event.issue.title }}
@@ -25,8 +18,8 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TRIAGE_API_URL: "https://khush25-issue-triage-api.hf.space/triage" # Make sure this URL is correct
+          TRIAGE_API_URL: "https://khush25-issue-triage-api.hf.space/triage"
 
         run: |
           pip install requests
-          python .github/workflows/triage.py
+          python triage_script.py
