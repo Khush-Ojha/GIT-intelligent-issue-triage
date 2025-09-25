@@ -1,14 +1,23 @@
 # .github/workflows/triage.yml
+
 name: 'AI Issue Triage'
+
 on:
   issues:
     types: [opened]
+
 permissions:
   issues: write
+
 jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
+      # THE FIX IS HERE: This is the essential step I missed.
+      # It checks out your repository's code onto the runner.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Run Triage Script
         env:
           ISSUE_TITLE: ${{ github.event.issue.title }}
