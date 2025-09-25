@@ -7,15 +7,18 @@ RUN apt-get update && apt-get install -y git git-lfs
 
 # Copy requirements first
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copy model directories
+# Copy the model and app files
 COPY ./model /code/model
-COPY ./tokenizer /code/tokenizer
-COPY ./summarization_model /code/summarization_model
+COPY ./app /code/app
 
-# Copy remaining application files
-COPY . .
+# Copy the main app file
+COPY app.py .
+
+# Set environment variables
+ENV MODEL_PATH="/code/model"
 
 # Expose port
 EXPOSE 7860
