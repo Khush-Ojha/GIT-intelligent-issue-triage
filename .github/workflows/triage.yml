@@ -13,11 +13,11 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-      # THE FIX IS HERE: This is the essential step I missed.
-      # It checks out your repository's code onto the runner.
+      # This step is essential to check out your code
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # This step now runs BOTH commands
       - name: Run Triage Script
         env:
           ISSUE_TITLE: ${{ github.event.issue.title }}
