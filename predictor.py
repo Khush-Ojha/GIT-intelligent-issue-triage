@@ -1,34 +1,41 @@
 # predictor.py
 
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModelForSeq2SeqLM, pipeline
 import torch
 
-# Define paths
-TOKENIZER_PATH = "./tokenizer"
-MODEL_PATH = "./model"
-CACHE_PATH = "/tmp/hf_cache" # Writable directory on the HF server
+# Define paths for all our local models and tokenizers
+CLASSIFICATION_TOKENIZER_PATH = "./tokenizer"
+CLASSIFICATION_MODEL_PATH = "./model"
+SUMMARIZATION_MODEL_PATH = "./summarization_model" # We will use this for both model and tokenizer
 
 # --- CLASSIFICATION MODEL (Existing) ---
 print("Loading classification model...")
-tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH)
-model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
-id2label = model.config.id2label
+classification_tokenizer = AutoTokenizer.from_pretrained(CLASSIFICATION_TOKENIZER_PATH)
+classification_model = AutoModelForSequenceClassification.from_pretrained(CLASSIFICATION_MODEL_PATH)
+id2label = classification_model.config.id2label
 print("Classification model loaded.")
 
 
 # --- SUMMARIZATION MODEL (New, with the fix) ---
 print("Loading summarization model...")
-# We tell the pipeline to use our writable cache directory
-summarizer = pipeline("summarization", model="/code/summarization_model", tokenizer="/code/summarization_model")
+# We explicitly load the model and tokenizer from the local path first
+summarization_model = AutoModelForSeq2SeqLM.from_pretrained(SUMMARIZATION_MODEL_PATH)
+summarization_tokenizer = AutoTokenizer.from_pretrained(SUMMARIZATION_MODEL_PATH)
+# Then, we create the pipeline from these loaded components
+summarizer = pipeline(
+    "summarization", 
+    model=summarization_model, 
+    tokenizer=summarization_tokenizer
+)
 print("Summarization model loaded.")
 
 
 # --- Prediction Functions ---
 def predict_label(text: str) -> str:
     """Takes a string of text and returns the predicted label."""
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
+    inputs = classification_tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
     with torch.no_grad():
-        logits = model(**inputs).logits
+        logits = classification_model(**inputs).logits
     predicted_class_id = logits.argmax().item()
     return id2label[predicted_class_id]
 
