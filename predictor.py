@@ -19,7 +19,7 @@ print("Classification model loaded.")
 # --- SUMMARIZATION MODEL (New, with the fix) ---
 print("Loading summarization model...")
 # We tell the pipeline to use our writable cache directory
-summarizer = pipeline("summarization", model="t5-small", model_kwargs={"cache_dir": CACHE_PATH})
+summarizer = pipeline("summarization", model="/code/summarization_model", tokenizer="/code/summarization_model")
 print("Summarization model loaded.")
 
 
