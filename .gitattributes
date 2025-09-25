@@ -1,3 +1,4 @@
 model/** filter=lfs diff=lfs merge=lfs -text
 tokenizer/** filter=lfs diff=lfs merge=lfs -text
 summarization_model/** filter=lfs diff=lfs merge=lfs -text
+*.bat linguist-vendored
